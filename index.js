@@ -1,47 +1,44 @@
-require('dotenv').config();
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 import express from 'express';
-import fetch from 'node-fetch';
+
+import db from './db/database.js';
+
 const app = express();
 const port = process.env.PORT || 3000;
-import mongoose from 'mongoose';
-// import Article from './models/article';
 
+// calling news apis and storing in db
+app.post('/getNews', async (req, res) => {
+  try {
+    const newsChannels = ['news', 'nyTimes', 'bloomberg'];
 
-const uri = "mongodb+srv://admin:123@cluster0.0divcvo.mongodb.net/NewsData?retryWrites=true&w=majority";
+    for(const channel of newsChannels) {
+      if (channel === 'news') {
 
-const db = mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
+      }
+    }
+  } catch (error) {
+
+  }
 })
-.then(() => console.log("database connected successfully"))
-.catch(err => console.log("Error is: ", err))
-
-
-const apiKey = process.env.API_KEY;
-const url = `${process.env.NEWS_API_URL}${apiKey}`;
-
-const articleSchema = new mongoose.Schema({
-  title: String,
-  url: String,
-  description: String,
-});
-
-const Article = mongoose.model('Article', articleSchema);
-
-app.get('/getNews', (req, res) => {
-  fetch(url)
+  fetch(`${process.env.NEWS_API_URL + process.env.NEWS_API_KEY}`)
     .then(res => res.json())
     .then(data => {
         let results = data.articles;
-        const articles = results.map(article => ({
+        // const articles = results.map(article => ({
+        //     title: article.title,
+        //     url: article.url,
+        //     description: article.description,
+        
+
+         // Save each article to the database
+         results.forEach(article => {
+          const articleData = {
             title: article.title,
             url: article.url,
             description: article.description,
-          }));
-
-         // Save each article to the database
-         articles.forEach(articleData => {
+          };
           const article = new Article(articleData);
           article.save()
             .then(() => console.log('Article saved to database'))
@@ -55,8 +52,9 @@ app.get('/getNews', (req, res) => {
       console.error('Error fetching data:', error);
       res.sendStatus(500);
     });
-});
 
+
+// fetching only one news channel's news and showing as per searched keyword
 app.get('/getNewsWithFilter', (req, res) => {
   const queryString = req.url.split('?')[1];
     if (queryString === undefined) {
@@ -90,4 +88,3 @@ app.listen(port, () => {
   console.log(`Server listening on port: ${port}`);
 });
 
-// db.collection('myCollection').find({ field: { $regex: regex } });
